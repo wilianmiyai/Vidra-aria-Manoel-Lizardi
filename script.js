@@ -1,0 +1,630 @@
+/* ========================================
+   VIDRAÇARIA MANOEL LIZARDI - JAVASCRIPT
+   ========================================
+   
+   Funcionalidades:
+   1. Menu Mobile Toggle
+   2. Header com scroll effect
+   3. Smooth Scroll Navigation
+   4. Active Link Highlight
+   5. Galeria com Filtros
+   6. Back to Top Button
+   7. Animações ao Scroll (Intersection Observer)
+   8. Carrossel de Avaliações
+   9. FAQ Accordion
+======================================== */
+
+// Aguarda o DOM carregar completamente
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // ========================================
+    // ELEMENTOS DO DOM
+    // ========================================
+    const header = document.getElementById('header');
+    const menuToggle = document.getElementById('menu-toggle');
+    const nav = document.getElementById('nav');
+    const navLinks = document.querySelectorAll('.nav-link');
+    const backToTop = document.getElementById('backToTop');
+    const filtroButtons = document.querySelectorAll('.filtro-btn');
+    const galeriaItems = document.querySelectorAll('.galeria-item');
+    
+    
+    // ========================================
+    // 1. MENU MOBILE TOGGLE
+    // ========================================
+    if (menuToggle && nav) {
+        menuToggle.addEventListener('click', function() {
+            this.classList.toggle('active');
+            nav.classList.toggle('active');
+            
+            // Previne scroll do body quando menu está aberto
+            document.body.style.overflow = nav.classList.contains('active') ? 'hidden' : '';
+        });
+        
+        // Fecha menu ao clicar em um link
+        navLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                menuToggle.classList.remove('active');
+                nav.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        });
+        
+        // Fecha menu ao clicar fora
+        document.addEventListener('click', function(e) {
+            if (nav.classList.contains('active') && 
+                !nav.contains(e.target) && 
+                !menuToggle.contains(e.target)) {
+                menuToggle.classList.remove('active');
+                nav.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+    }
+    
+    
+    // ========================================
+    // 2. HEADER COM EFEITO DE SCROLL
+    // ========================================
+    function handleHeaderScroll() {
+        if (window.scrollY > 100) {
+            header.classList.add('scrolled');
+        } else {
+            header.classList.remove('scrolled');
+        }
+    }
+    
+    // Executa na carga inicial
+    handleHeaderScroll();
+    
+    // Executa no scroll
+    window.addEventListener('scroll', handleHeaderScroll);
+    
+    
+    // ========================================
+    // 8. CARROSSEL DE AVALIAÇÕES
+    // ========================================
+    function initCarrossel() {
+        const track = document.querySelector('.avaliacoes-track');
+        const cards = document.querySelectorAll('.avaliacoes-track .avaliacao-card');
+        const prevBtn = document.getElementById('avaliacoesPrev');
+        const nextBtn = document.getElementById('avaliacoesNext');
+        const dotsContainer = document.getElementById('carrosselDots');
+        
+        if (!track || cards.length === 0) return;
+        
+        let currentIndex = 0;
+        let cardsPerView = getCardsPerView();
+        let totalPages = Math.ceil(cards.length / cardsPerView);
+        
+        // Determina quantos cards mostrar por vez
+        function getCardsPerView() {
+            if (window.innerWidth <= 576) return 1;
+            if (window.innerWidth <= 992) return 2;
+            return 3;
+        }
+        
+        // Cria os dots de navegação
+        function createDots() {
+            dotsContainer.innerHTML = '';
+            for (let i = 0; i < totalPages; i++) {
+                const dot = document.createElement('button');
+                dot.classList.add('carrossel-dot');
+                if (i === 0) dot.classList.add('active');
+                dot.setAttribute('aria-label', `Ir para página ${i + 1}`);
+                dot.addEventListener('click', () => goToPage(i));
+                dotsContainer.appendChild(dot);
+            }
+        }
+        
+        // Atualiza dots ativos
+        function updateDots() {
+            const dots = dotsContainer.querySelectorAll('.carrossel-dot');
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentIndex);
+            });
+        }
+        
+        // Vai para uma página específica
+        function goToPage(pageIndex) {
+            currentIndex = pageIndex;
+            const cardWidth = cards[0].offsetWidth + parseInt(getComputedStyle(track).gap);
+            const offset = currentIndex * cardsPerView * cardWidth;
+            track.style.transform = `translateX(-${offset}px)`;
+            updateDots();
+            updateButtons();
+        }
+        
+        // Atualiza estado dos botões
+        function updateButtons() {
+            if (prevBtn) prevBtn.disabled = currentIndex === 0;
+            if (nextBtn) nextBtn.disabled = currentIndex >= totalPages - 1;
+        }
+        
+        // Navegação
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => {
+                if (currentIndex > 0) {
+                    goToPage(currentIndex - 1);
+                }
+            });
+        }
+        
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                if (currentIndex < totalPages - 1) {
+                    goToPage(currentIndex + 1);
+                }
+            });
+        }
+        
+        // Recalcula no resize
+        window.addEventListener('resize', debounce(() => {
+            cardsPerView = getCardsPerView();
+            totalPages = Math.ceil(cards.length / cardsPerView);
+            currentIndex = Math.min(currentIndex, totalPages - 1);
+            createDots();
+            goToPage(currentIndex);
+        }, 250));
+        
+        // Auto-play opcional
+        let autoPlayInterval;
+        
+        function startAutoPlay() {
+            autoPlayInterval = setInterval(() => {
+                if (currentIndex < totalPages - 1) {
+                    goToPage(currentIndex + 1);
+                } else {
+                    goToPage(0);
+                }
+            }, 5000);
+        }
+        
+        function stopAutoPlay() {
+            clearInterval(autoPlayInterval);
+        }
+        
+        // Pausa auto-play no hover
+        const carrosselWrapper = document.querySelector('.avaliacoes-carrossel-wrapper');
+        if (carrosselWrapper) {
+            carrosselWrapper.addEventListener('mouseenter', stopAutoPlay);
+            carrosselWrapper.addEventListener('mouseleave', startAutoPlay);
+        }
+        
+        // Inicializa
+        createDots();
+        updateButtons();
+        startAutoPlay();
+    }
+    
+    initCarrossel();
+    
+    
+    // ========================================
+    // 9. FAQ ACCORDION
+    // ========================================
+    function initFAQ() {
+        const faqItems = document.querySelectorAll('.faq-item');
+        
+        faqItems.forEach(item => {
+            const question = item.querySelector('.faq-question');
+            
+            question.addEventListener('click', () => {
+                const isActive = item.classList.contains('active');
+                
+                // Fecha todos os outros
+                faqItems.forEach(otherItem => {
+                    otherItem.classList.remove('active');
+                    otherItem.querySelector('.faq-question').setAttribute('aria-expanded', 'false');
+                });
+                
+                // Toggle do item clicado
+                if (!isActive) {
+                    item.classList.add('active');
+                    question.setAttribute('aria-expanded', 'true');
+                }
+            });
+        });
+    }
+    
+    initFAQ();
+    
+    
+    // ========================================
+    // 3. SMOOTH SCROLL PARA LINKS INTERNOS
+    // ========================================
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            const targetId = this.getAttribute('href');
+            
+            if (targetId === '#') return;
+            
+            const targetElement = document.querySelector(targetId);
+            
+            if (targetElement) {
+                e.preventDefault();
+                
+                const headerHeight = header.offsetHeight;
+                const targetPosition = targetElement.offsetTop - headerHeight;
+                
+                window.scrollTo({
+                    top: targetPosition,
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
+    
+    
+    // ========================================
+    // 4. HIGHLIGHT DO LINK ATIVO NA NAVEGAÇÃO
+    // ========================================
+    function updateActiveLink() {
+        const sections = document.querySelectorAll('section[id]');
+        const scrollPosition = window.scrollY + 150;
+        
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            const sectionHeight = section.offsetHeight;
+            const sectionId = section.getAttribute('id');
+            
+            if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === `#${sectionId}`) {
+                        link.classList.add('active');
+                    }
+                });
+            }
+        });
+    }
+    
+    window.addEventListener('scroll', updateActiveLink);
+    updateActiveLink(); // Executa na carga inicial
+    
+    
+    // ========================================
+    // 5. GALERIA COM FILTROS
+    // ========================================
+    if (filtroButtons.length > 0 && galeriaItems.length > 0) {
+        filtroButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Remove active de todos os botões
+                filtroButtons.forEach(btn => btn.classList.remove('active'));
+                
+                // Adiciona active ao botão clicado
+                this.classList.add('active');
+                
+                // Obtém a categoria selecionada
+                const filterValue = this.getAttribute('data-filter');
+                
+                // Filtra os itens da galeria
+                galeriaItems.forEach(item => {
+                    const itemCategory = item.getAttribute('data-category');
+                    
+                    if (filterValue === 'todos' || itemCategory === filterValue) {
+                        item.classList.remove('hidden');
+                        item.style.animation = 'fadeInUp 0.5s ease forwards';
+                    } else {
+                        item.classList.add('hidden');
+                    }
+                });
+            });
+        });
+    }
+    
+    
+    // ========================================
+    // 6. BOTÃO VOLTAR AO TOPO
+    // ========================================
+    function handleBackToTop() {
+        if (window.scrollY > 500) {
+            backToTop.classList.add('visible');
+        } else {
+            backToTop.classList.remove('visible');
+        }
+    }
+    
+    if (backToTop) {
+        window.addEventListener('scroll', handleBackToTop);
+        
+        backToTop.addEventListener('click', function() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+    }
+    
+    
+    // ========================================
+    // 7. ANIMAÇÕES AO SCROLL (Intersection Observer)
+    // ========================================
+    const animateOnScroll = function() {
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.1
+        };
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate-fadeInUp');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+        
+        // Elementos para animar
+        const elementsToAnimate = document.querySelectorAll(
+            '.section-header, .servico-card, .avaliacao-card, .info-card, .sobre-content > *, .galeria-item'
+        );
+        
+        elementsToAnimate.forEach(element => {
+            element.style.opacity = '0';
+            element.style.transform = 'translateY(30px)';
+            observer.observe(element);
+        });
+    };
+    
+    // Inicializa animações se o navegador suportar Intersection Observer
+    if ('IntersectionObserver' in window) {
+        animateOnScroll();
+    }
+    
+    
+    // ========================================
+    // 8. EFEITO DE DIGITAÇÃO NO HERO (Opcional)
+    // ========================================
+    function typeWriter(element, text, speed = 50) {
+        let i = 0;
+        element.textContent = '';
+        
+        function type() {
+            if (i < text.length) {
+                element.textContent += text.charAt(i);
+                i++;
+                setTimeout(type, speed);
+            }
+        }
+        
+        type();
+    }
+    
+    
+    // ========================================
+    // 9. LAZY LOADING PARA IMAGENS (Preparado para uso futuro)
+    // ========================================
+    function lazyLoadImages() {
+        const lazyImages = document.querySelectorAll('img[data-src]');
+        
+        if ('IntersectionObserver' in window) {
+            const imageObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        img.src = img.dataset.src;
+                        img.removeAttribute('data-src');
+                        imageObserver.unobserve(img);
+                    }
+                });
+            });
+            
+            lazyImages.forEach(img => imageObserver.observe(img));
+        } else {
+            // Fallback para navegadores antigos
+            lazyImages.forEach(img => {
+                img.src = img.dataset.src;
+            });
+        }
+    }
+    
+    lazyLoadImages();
+    
+    
+    // ========================================
+    // 10. VALIDAÇÃO DE FORMULÁRIO (Preparado para uso futuro)
+    // ========================================
+    function initFormValidation() {
+        const forms = document.querySelectorAll('form[data-validate]');
+        
+        forms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                let isValid = true;
+                const requiredFields = form.querySelectorAll('[required]');
+                
+                requiredFields.forEach(field => {
+                    if (!field.value.trim()) {
+                        isValid = false;
+                        field.classList.add('error');
+                    } else {
+                        field.classList.remove('error');
+                    }
+                    
+                    // Validação de email
+                    if (field.type === 'email' && field.value) {
+                        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                        if (!emailRegex.test(field.value)) {
+                            isValid = false;
+                            field.classList.add('error');
+                        }
+                    }
+                });
+                
+                if (!isValid) {
+                    e.preventDefault();
+                }
+            });
+        });
+    }
+    
+    initFormValidation();
+    
+    
+    // ========================================
+    // 11. CONTADOR ANIMADO (Para estatísticas)
+    // ========================================
+    function animateCounter(element, target, duration = 2000) {
+        let start = 0;
+        const increment = target / (duration / 16);
+        
+        function updateCounter() {
+            start += increment;
+            if (start < target) {
+                element.textContent = Math.floor(start);
+                requestAnimationFrame(updateCounter);
+            } else {
+                element.textContent = target;
+            }
+        }
+        
+        updateCounter();
+    }
+    
+    // Inicia contadores quando visíveis
+    function initCounters() {
+        const counters = document.querySelectorAll('[data-counter]');
+        
+        if ('IntersectionObserver' in window) {
+            const counterObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const target = parseInt(entry.target.dataset.counter);
+                        animateCounter(entry.target, target);
+                        counterObserver.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.5 });
+            
+            counters.forEach(counter => counterObserver.observe(counter));
+        }
+    }
+    
+    initCounters();
+    
+    
+    // ========================================
+    // 12. PRELOADER (Opcional - descomente se necessário)
+    // ========================================
+    /*
+    function hidePreloader() {
+        const preloader = document.getElementById('preloader');
+        if (preloader) {
+            preloader.style.opacity = '0';
+            setTimeout(() => {
+                preloader.style.display = 'none';
+            }, 500);
+        }
+    }
+    
+    window.addEventListener('load', hidePreloader);
+    */
+    
+    
+    // ========================================
+    // 13. EFEITO PARALLAX NO HERO (Sutil)
+    // ========================================
+    function initParallax() {
+        const hero = document.querySelector('.hero');
+        
+        if (hero && window.innerWidth > 768) {
+            window.addEventListener('scroll', function() {
+                const scrolled = window.scrollY;
+                const rate = scrolled * 0.3;
+                
+                if (scrolled < window.innerHeight) {
+                    hero.style.backgroundPositionY = `${rate}px`;
+                }
+            });
+        }
+    }
+    
+    initParallax();
+    
+    
+    // ========================================
+    // 14. MODAL PARA GALERIA (Preparado para uso futuro)
+    // ========================================
+    function initGalleryModal() {
+        const zoomButtons = document.querySelectorAll('.galeria-zoom');
+        
+        zoomButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Aqui você pode implementar a lógica do modal
+                // Por enquanto, apenas um console.log
+                console.log('Modal da galeria - implementar quando tiver imagens reais');
+                
+                // Exemplo de implementação futura:
+                // const imageSrc = this.closest('.galeria-item').querySelector('img').src;
+                // openModal(imageSrc);
+            });
+        });
+    }
+    
+    initGalleryModal();
+    
+    
+    // ========================================
+    // 15. MENSAGEM DE BOAS-VINDAS NO CONSOLE
+    // ========================================
+    console.log('%c Vidraçaria Manoel Lizardi ', 
+        'background: #1a365d; color: #fff; padding: 10px 20px; font-size: 16px; font-weight: bold;');
+    console.log('%c Site desenvolvido com ❤️ ', 
+        'color: #3182ce; font-size: 12px;');
+    
+});
+
+
+// ========================================
+// FUNÇÕES UTILITÁRIAS GLOBAIS
+// ========================================
+
+/**
+ * Debounce - Limita a frequência de execução de uma função
+ * @param {Function} func - Função a ser limitada
+ * @param {number} wait - Tempo de espera em ms
+ * @returns {Function}
+ */
+function debounce(func, wait = 100) {
+    let timeout;
+    return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+}
+
+/**
+ * Throttle - Garante que a função seja executada no máximo uma vez por período
+ * @param {Function} func - Função a ser limitada
+ * @param {number} limit - Limite de tempo em ms
+ * @returns {Function}
+ */
+function throttle(func, limit = 100) {
+    let inThrottle;
+    return function(...args) {
+        if (!inThrottle) {
+            func.apply(this, args);
+            inThrottle = true;
+            setTimeout(() => inThrottle = false, limit);
+        }
+    };
+}
+
+/**
+ * Verifica se o dispositivo é mobile
+ * @returns {boolean}
+ */
+function isMobile() {
+    return window.innerWidth <= 768;
+}
+
+/**
+ * Verifica se o dispositivo suporta touch
+ * @returns {boolean}
+ */
+function isTouchDevice() {
+    return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+}
