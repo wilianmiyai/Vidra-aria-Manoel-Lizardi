@@ -1,3 +1,28 @@
+/* ========================================
+   VIDRAÇARIA MANOEL LIZARDI - ESTILOS CSS
+   ========================================
+   
+   Estrutura do arquivo:
+   1. Reset e Variáveis CSS
+   2. Estilos Base
+   3. Header e Navegação
+   4. Hero Section
+   5. Seções Gerais
+   6. Sobre
+   7. Serviços
+   8. Galeria
+   9. Avaliações
+   10. Informações (Horários/Atendimento)
+   11. Contato
+   12. Footer
+   13. Componentes Flutuantes (WhatsApp/Back to Top)
+   14. Animações
+   15. Media Queries (Responsividade)
+======================================== */
+
+/* ========================================
+   1. RESET E VARIÁVEIS CSS
+======================================== */
 :root {
     /* Paleta de Cores - Tons sóbrios para vidraçaria */
     --color-primary: #1a365d;        /* Azul escuro - Principal */
@@ -1391,7 +1416,7 @@ h1, h2, h3, h4, h5, h6 {
     font-size: 30px;
     box-shadow: var(--shadow-xl);
     z-index: 999;
-    transition: all var(--transition-base);
+    transition: background var(--transition-base), transform var(--transition-base);
 }
 
 .whatsapp-float:hover {
@@ -1431,8 +1456,8 @@ h1, h2, h3, h4, h5, h6 {
 /* Botão Voltar ao Topo */
 .back-to-top {
     position: fixed;
-    bottom: 30px;
-    right: 100px;
+    bottom: 100px;
+    right: 30px;
     width: 45px;
     height: 45px;
     background: var(--color-primary);
@@ -1653,16 +1678,6 @@ h1, h2, h3, h4, h5, h6 {
     
     .footer-contato ul li {
         justify-content: center;
-    }
-    
-    .back-to-top {
-        right: 20px;
-        bottom: 100px;
-    }
-    
-    .whatsapp-float {
-        right: 20px;
-        bottom: 20px;
     }
     
     .whatsapp-tooltip {
@@ -2442,67 +2457,7 @@ h1, h2, h3, h4, h5, h6 {
 
 
 /* ========================================
-   17. BOTÕES FIXOS MOBILE
-======================================== */
-.mobile-action-bar {
-    display: none;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: var(--color-white);
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
-    z-index: 1000;
-    padding: var(--spacing-sm);
-    padding-bottom: calc(var(--spacing-sm) + env(safe-area-inset-bottom));
-}
-
-.mobile-action-bar.visible {
-    display: flex;
-}
-
-.mobile-action-btn {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: var(--spacing-sm) var(--spacing-md);
-    border-radius: var(--radius-md);
-    text-decoration: none;
-    font-size: var(--text-sm);
-    font-weight: 600;
-    transition: all var(--transition-fast);
-    gap: 4px;
-}
-
-.mobile-action-btn i {
-    font-size: 1.5rem;
-}
-
-.mobile-call {
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
-    color: var(--color-white);
-    margin-right: var(--spacing-xs);
-}
-
-.mobile-call:hover {
-    transform: scale(1.02);
-    box-shadow: 0 4px 15px rgba(26, 54, 93, 0.4);
-}
-
-.mobile-whatsapp {
-    background: linear-gradient(135deg, var(--color-whatsapp) 0%, var(--color-whatsapp-dark) 100%);
-    color: var(--color-white);
-}
-
-.mobile-whatsapp:hover {
-    transform: scale(1.02);
-    box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4);
-}
-
-/* ========================================
-   18. LIGHTBOX
+   17. LIGHTBOX
 ======================================== */
 .lightbox {
     position: fixed;
@@ -2690,21 +2645,6 @@ h1, h2, h3, h4, h5, h6 {
    20. MEDIA QUERIES ADICIONAIS
 ======================================== */
 @media (max-width: 768px) {
-    /* Mostrar barra de ação mobile */
-    .mobile-action-bar.visible {
-        display: flex;
-    }
-    
-    /* Esconder WhatsApp flutuante no mobile (substituído pela barra) */
-    .whatsapp-float {
-        bottom: 90px;
-    }
-    
-    /* Ajustar back to top */
-    .back-to-top {
-        bottom: 90px;
-    }
-    
     /* Lightbox mobile */
     .lightbox-prev,
     .lightbox-next {
@@ -2737,5 +2677,4 @@ h1, h2, h3, h4, h5, h6 {
         padding-bottom: 100px;
     }
 }
-
 
