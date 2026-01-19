@@ -1,18 +1,7 @@
-/* ========================================
-   VIDRAÇARIA MANOEL LIZARDI - JAVASCRIPT
-   ========================================
-   
-   Funcionalidades:
-   1. Menu Mobile Toggle
-   2. Header com scroll effect
-   3. Smooth Scroll Navigation
-   4. Active Link Highlight
-   5. Galeria com Filtros
-   6. Back to Top Button
-   7. Animações ao Scroll (Intersection Observer)
-   8. Carrossel de Avaliações
-   9. FAQ Accordion
-======================================== */
+window.addEventListener('DOMContentLoaded', function() {
+    initScrollAnimations();
+    initCounterAnimation();
+});
 
 // Aguarda o DOM carregar completamente
 document.addEventListener('DOMContentLoaded', function() {
@@ -27,6 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const backToTop = document.getElementById('backToTop');
     const filtroButtons = document.querySelectorAll('.filtro-btn');
     const galeriaItems = document.querySelectorAll('.galeria-item');
+    const mobileActionBar = document.getElementById('mobileActionBar');
     
     
     // ========================================
@@ -627,4 +617,213 @@ function isMobile() {
  */
 function isTouchDevice() {
     return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+}
+
+// ========================================
+// CONTADOR ANIMADO
+// ========================================
+function initCounterAnimation() {
+    const counters = document.querySelectorAll('.stat-number[data-target]');
+    
+    const animateCounter = (counter) => {
+        const target = parseInt(counter.getAttribute('data-target'));
+        const suffix = counter.getAttribute('data-suffix') || '';
+        const duration = 2000; // 2 segundos
+        const increment = target / (duration / 16); // 60fps
+        let current = 0;
+        
+        const updateCounter = () => {
+            current += increment;
+            if (current < target) {
+                counter.textContent = Math.floor(current) + suffix;
+                requestAnimationFrame(updateCounter);
+            } else {
+                counter.textContent = target + suffix;
+            }
+        };
+        
+        updateCounter();
+    };
+    
+    // Usar Intersection Observer para iniciar quando visível
+    const counterObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                animateCounter(entry.target);
+                counterObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.5 });
+    
+    counters.forEach(counter => counterObserver.observe(counter));
+}
+
+// ========================================
+// BOTÕES MOBILE FIXOS
+// ========================================
+function initMobileActionBar() {
+    const mobileActionBar = document.getElementById('mobileActionBar');
+    
+    if (mobileActionBar && window.innerWidth <= 768) {
+        // Mostrar após rolar um pouco
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                mobileActionBar.classList.add('visible');
+            } else {
+                mobileActionBar.classList.remove('visible');
+            }
+        });
+    }
+}
+
+// Inicializar barra mobile
+document.addEventListener('DOMContentLoaded', initMobileActionBar);
+
+// ========================================
+// LIGHTBOX
+// ========================================
+function initLightbox() {
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImage = document.getElementById('lightboxImage');
+    const lightboxClose = document.getElementById('lightboxClose');
+    const lightboxPrev = document.getElementById('lightboxPrev');
+    const lightboxNext = document.getElementById('lightboxNext');
+    
+    if (!lightbox) return;
+    
+    let currentImages = [];
+    let currentIndex = 0;
+    
+    // Coletar todas as imagens que podem abrir no lightbox
+    const galleryImages = document.querySelectorAll('.sobre-img, .contato-img, .galeria-img');
+    
+    galleryImages.forEach((img, index) => {
+        img.style.cursor = 'pointer';
+        img.addEventListener('click', () => {
+            currentImages = Array.from(galleryImages).map(i => i.src);
+            currentIndex = index;
+            openLightbox(img.src);
+        });
+    });
+    
+    function openLightbox(src) {
+        lightboxImage.src = src;
+        lightbox.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeLightbox() {
+        lightbox.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+    
+    function showPrev() {
+        currentIndex = (currentIndex - 1 + currentImages.length) % currentImages.length;
+        lightboxImage.src = currentImages[currentIndex];
+    }
+    
+    function showNext() {
+        currentIndex = (currentIndex + 1) % currentImages.length;
+        lightboxImage.src = currentImages[currentIndex];
+    }
+    
+    // Event listeners
+    if (lightboxClose) lightboxClose.addEventListener('click', closeLightbox);
+    if (lightboxPrev) lightboxPrev.addEventListener('click', showPrev);
+    if (lightboxNext) lightboxNext.addEventListener('click', showNext);
+    
+    // Fechar ao clicar fora
+    lightbox.addEventListener('click', (e) => {
+        if (e.target === lightbox) closeLightbox();
+    });
+    
+    // Navegação por teclado
+    document.addEventListener('keydown', (e) => {
+        if (!lightbox.classList.contains('active')) return;
+        
+        if (e.key === 'Escape') closeLightbox();
+        if (e.key === 'ArrowLeft') showPrev();
+        if (e.key === 'ArrowRight') showNext();
+    });
+}
+
+// Inicializar lightbox
+document.addEventListener('DOMContentLoaded', initLightbox);
+
+// ========================================
+// ANIMAÇÕES DE ENTRADA NAS SEÇÕES
+// ========================================
+function initScrollAnimations() {
+    // Adicionar classes de animação aos elementos
+    const sections = document.querySelectorAll('.section');
+    const sectionHeaders = document.querySelectorAll('.section-header');
+    const servicoCards = document.querySelectorAll('.servico-card');
+    const infoCards = document.querySelectorAll('.info-card');
+    const faqItems = document.querySelectorAll('.faq-item');
+    
+    // Observer para animações
+    const animationObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('animated');
+            }
+        });
+    }, {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    });
+    
+    // Observar section headers
+    sectionHeaders.forEach(header => {
+        header.classList.add('animate-on-scroll');
+        animationObserver.observe(header);
+    });
+    
+    // Observar cards de serviço com delay sequencial
+    servicoCards.forEach((card, index) => {
+        card.style.transitionDelay = `${index * 0.1}s`;
+        animationObserver.observe(card);
+    });
+    
+    // Observar info cards
+    infoCards.forEach((card, index) => {
+        card.classList.add('animate-on-scroll');
+        card.style.transitionDelay = `${index * 0.15}s`;
+        animationObserver.observe(card);
+    });
+    
+    // Observar FAQ items
+    faqItems.forEach((item, index) => {
+        item.classList.add('animate-on-scroll');
+        item.style.transitionDelay = `${index * 0.08}s`;
+        animationObserver.observe(item);
+    });
+    
+    // Sobre content animation
+    const sobreImage = document.querySelector('.sobre-image');
+    const sobreText = document.querySelector('.sobre-text');
+    
+    if (sobreImage) {
+        sobreImage.classList.add('animate-fade-left');
+        animationObserver.observe(sobreImage);
+    }
+    
+    if (sobreText) {
+        sobreText.classList.add('animate-fade-right');
+        animationObserver.observe(sobreText);
+    }
+    
+    // Contato content animation
+    const contatoInfo = document.querySelector('.contato-info');
+    const contatoImagem = document.querySelector('.contato-imagem');
+    
+    if (contatoInfo) {
+        contatoInfo.classList.add('animate-fade-left');
+        animationObserver.observe(contatoInfo);
+    }
+    
+    if (contatoImagem) {
+        contatoImagem.classList.add('animate-fade-right');
+        animationObserver.observe(contatoImagem);
+    }
 }
