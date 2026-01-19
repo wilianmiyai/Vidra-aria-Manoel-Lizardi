@@ -16,7 +16,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const backToTop = document.getElementById('backToTop');
     const filtroButtons = document.querySelectorAll('.filtro-btn');
     const galeriaItems = document.querySelectorAll('.galeria-item');
-    const mobileActionBar = document.getElementById('mobileActionBar');
     
     
     // ========================================
@@ -657,27 +656,6 @@ function initCounterAnimation() {
     
     counters.forEach(counter => counterObserver.observe(counter));
 }
-
-// ========================================
-// BOTÕES MOBILE FIXOS
-// ========================================
-function initMobileActionBar() {
-    const mobileActionBar = document.getElementById('mobileActionBar');
-    
-    if (mobileActionBar && window.innerWidth <= 768) {
-        // Mostrar após rolar um pouco
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 300) {
-                mobileActionBar.classList.add('visible');
-            } else {
-                mobileActionBar.classList.remove('visible');
-            }
-        });
-    }
-}
-
-// Inicializar barra mobile
-document.addEventListener('DOMContentLoaded', initMobileActionBar);
 
 // ========================================
 // LIGHTBOX
