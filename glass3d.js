@@ -20,49 +20,66 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
     || window.innerWidth < 768;
 
-// Detectar PC fraco (verificar WebGL capabilities)
-let isLowEndPC = false;
-function detectLowEndPC() {
-    const canvas = document.createElement('canvas');
-    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-    if (gl) {
-        const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
-        if (debugInfo) {
-            const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
-            // GPUs integradas comuns = PC fraco
-            const lowEndGPUs = ['Intel', 'HD Graphics', 'UHD Graphics', 'Iris', 'Mali', 'Adreno', 'PowerVR'];
-            isLowEndPC = lowEndGPUs.some(gpu => renderer.includes(gpu));
-        }
-        // Verificar memória de vídeo aproximada
-        const maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
-        if (maxTextureSize <= 4096) isLowEndPC = true;
-    }
-    // Também considerar resolução de tela
-    if (window.innerWidth * window.innerHeight > 1920 * 1080) {
-        isLowEndPC = true; // Tela grande com GPU fraca = problema
-    }
-    return isLowEndPC;
-}
-detectLowEndPC();
+// Qualidade selecionável - COMEÇA NO LOW para melhor compatibilidade
+let qualityMode = 'low';
 
-// Modo de qualidade
-const qualityMode = isMobile ? 'low' : (isLowEndPC ? 'medium' : 'high');
-console.log('Quality mode:', qualityMode, '| Mobile:', isMobile, '| LowEnd PC:', isLowEndPC);
+// Função para obter configurações baseadas na qualidade
+function getQualityConfig(mode) {
+    const configs = {
+        low: {
+            pixelRatio: 1,
+            bloomStrength: 0,
+            shadowMapSize: 256,
+            antialias: false,
+            enablePostProcessing: false,
+            enableShadows: false,
+            cubeMapSize: 32,
+            fragmentMultiplier: 0.2,
+            targetFPS: 30
+        },
+        medium: {
+            pixelRatio: Math.min(window.devicePixelRatio, 1.5),
+            bloomStrength: 0,
+            shadowMapSize: 512,
+            antialias: false,
+            enablePostProcessing: false,
+            enableShadows: true,
+            cubeMapSize: 64,
+            fragmentMultiplier: 0.5,
+            targetFPS: 30
+        },
+        high: {
+            pixelRatio: Math.min(window.devicePixelRatio, 2),
+            bloomStrength: 0.05,
+            shadowMapSize: 1024,
+            antialias: true,
+            enablePostProcessing: true,
+            enableShadows: true,
+            cubeMapSize: 256,
+            fragmentMultiplier: 1.0,
+            targetFPS: 60
+        }
+    };
+    return configs[mode] || configs.low;
+}
+
+let qualityConfig = getQualityConfig(qualityMode);
+console.log('Quality mode:', qualityMode);
 
 const CONFIG = {
     // Render - adaptativo por qualidade
-    pixelRatio: qualityMode === 'low' ? 1 : (qualityMode === 'medium' ? Math.min(window.devicePixelRatio, 1.5) : Math.min(window.devicePixelRatio, 2)),
+    pixelRatio: qualityConfig.pixelRatio,
     exposure: 0.55,
-    bloomStrength: qualityMode === 'high' ? 0.05 : 0, // Só no high
+    bloomStrength: qualityConfig.bloomStrength,
     bloomRadius: 0.2,
     bloomThreshold: 0.95,
     
     // Qualidade adaptativa
-    shadowMapSize: qualityMode === 'high' ? 1024 : (qualityMode === 'medium' ? 512 : 256),
-    antialias: qualityMode === 'high',
-    enablePostProcessing: qualityMode === 'high',
-    enableShadows: qualityMode !== 'low',
-    cubeMapSize: qualityMode === 'high' ? 256 : (qualityMode === 'medium' ? 128 : 64),
+    shadowMapSize: qualityConfig.shadowMapSize,
+    antialias: qualityConfig.antialias,
+    enablePostProcessing: qualityConfig.enablePostProcessing,
+    enableShadows: qualityConfig.enableShadows,
+    cubeMapSize: qualityConfig.cubeMapSize,
     
     // Física
     gravity: -9.81,
