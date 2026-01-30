@@ -1,5 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://wilianmiyai.github.io/Vidracaria-Manoel-Lizardi/sitemap.xml
-
