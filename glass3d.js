@@ -1544,19 +1544,47 @@
             camera.updateProjectionMatrix();
             renderer.setSize(container.clientWidth, container.clientHeight);
         });
+        
+        // Pausar animação quando não está visível (IMPORTANTE para performance)
+        if ('IntersectionObserver' in window) {
+            const visibilityObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        if (!animationId) animate();
+                    } else {
+                        if (animationId) {
+                            cancelAnimationFrame(animationId);
+                            animationId = null;
+                        }
+                    }
+                });
+            }, { threshold: 0.1 });
+            
+            visibilityObserver.observe(container);
+        }
     }
 
     // ========== ANIMAÇÃO ==========
     let frameCount = 0;
+    let lastTime = 0;
+    const targetFPS = isMobile ? 30 : 60; // Limitar FPS no mobile
+    const frameInterval = 1000 / targetFPS;
     
-    function animate() {
+    function animate(currentTime) {
         animationId = requestAnimationFrame(animate);
+        
+        // Throttle de FPS no mobile
+        if (isMobile) {
+            if (currentTime - lastTime < frameInterval) return;
+            lastTime = currentTime;
+        }
+        
         frameCount++;
         
         const f = slowMotionFactor;
         
         // No mobile, pular alguns frames para efeitos secundários
-        const skipFrame = isMobile && frameCount % 2 !== 0;
+        const skipFrame = isMobile && frameCount % 3 !== 0;
 
         // Rotação do vidro (sempre atualiza)
         if (glass && glass.visible) {
@@ -1568,13 +1596,15 @@
         // Atualizar efeitos (pula frames no mobile)
         if (!skipFrame) {
             updateSparkles();
-            updateRain();
+            if (!isMobile) updateRain(); // Desativa chuva no mobile
             updateFingerMarks();
         }
 
-        // Fragmentos (sempre atualiza para física correta)
-        fragments.forEach(frag => {
-            if (frag.userData.settled) return;
+        // Fragmentos (sempre atualiza para física correta, mas simplificado no mobile)
+        const fragLimit = isMobile ? Math.min(fragments.length, 50) : fragments.length;
+        for (let i = 0; i < fragLimit; i++) {
+            const frag = fragments[i];
+            if (frag.userData.settled) continue;
             
             frag.position.add(frag.userData.vel.clone().multiplyScalar(f));
             frag.userData.vel.y -= 0.003 * f;
@@ -1585,13 +1615,12 @@
 
             if (frag.position.y <= frag.userData.groundY) {
                 frag.position.y = frag.userData.groundY;
-                if (frag.userData.bounces < 2 && Math.abs(frag.userData.vel.y) > 0.01) {
+                if (frag.userData.bounces < (isMobile ? 1 : 2) && Math.abs(frag.userData.vel.y) > 0.01) {
                     frag.userData.vel.y *= -0.25;
                     frag.userData.vel.x *= 0.7;
                     frag.userData.vel.z *= 0.7;
                     frag.userData.rotSpeed.multiplyScalar(0.4);
                     frag.userData.bounces++;
-                    if (!isMobile && Math.random() > 0.7) playTinkle(); // Som só no desktop
                 } else {
                     frag.userData.vel.set(0,0,0);
                     frag.userData.rotSpeed.set(0,0,0);
@@ -1601,10 +1630,10 @@
             }
             frag.userData.vel.x *= 0.99;
             frag.userData.vel.z *= 0.99;
-        });
+        }
 
-        // Poeira (menos freqüente no mobile)
-        if (!skipFrame) {
+        // Poeira (desativado no mobile)
+        if (!isMobile && !skipFrame) {
             dustParticles.forEach((d, i) => {
                 d.position.add(d.userData.vel);
                 d.userData.vel.y += 0.0002;
